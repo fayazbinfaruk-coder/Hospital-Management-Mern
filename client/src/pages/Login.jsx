@@ -30,7 +30,6 @@ const Login = () => {
 
       const userRole = res.data.user.role;
 
-
       if (userRole === 'admin') {
         navigate('/admin-dashboard');
       } else if (userRole === 'doctor') {
@@ -49,48 +48,113 @@ const Login = () => {
   };
 
   return (
-    <section>
+    <section className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-irisBlueColor/10 py-12 px-4">
       <div className="container">
-        <div className="max-w-md mx-auto text-center">
-          <h2 className="text-2xl font-semibold mb-6">Login to Your Account</h2>
+        <div className="max-w-md mx-auto">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 border border-gray-100 transform hover:scale-[1.01] transition-transform duration-300">
+            {/* Header */}
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-primaryColor to-irisBlueColor rounded-full mb-4 shadow-lg">
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </div>
+              <h2 className="text-3xl font-bold text-headingColor mb-2">Welcome Back</h2>
+              <p className="text-textColor">Login to access your account</p>
+            </div>
 
-          <form onSubmit={handleSubmit}>
-            <input
-              type="email"
-              name="email"
-              placeholder="Email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-              className="w-full p-3 mb-4 border rounded-md"
-            />
-            <input
-              type="password"
-              name="password"
-              placeholder="Password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              className="w-full p-3 mb-4 border rounded-md"
-            />
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {/* Email Input */}
+              <div className="relative">
+                <label className="block text-sm font-semibold text-headingColor mb-2">Email Address</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+                    </svg>
+                  </span>
+                  <input
+                    type="email"
+                    name="email"
+                    placeholder="Enter your email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    required
+                    className="w-full pl-11 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primaryColor focus:ring-2 focus:ring-primaryColor/20 outline-none transition-all duration-300"
+                  />
+                </div>
+              </div>
 
-            {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+              {/* Password Input */}
+              <div className="relative">
+                <label className="block text-sm font-semibold text-headingColor mb-2">Password</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                  </span>
+                  <input
+                    type="password"
+                    name="password"
+                    placeholder="Enter your password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    required
+                    className="w-full pl-11 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primaryColor focus:ring-2 focus:ring-primaryColor/20 outline-none transition-all duration-300"
+                  />
+                </div>
+              </div>
 
-            <button type="submit" className="btn w-full mb-4">Login</button>
+              {/* Error Message */}
+              {error && (
+                <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg animate-shake">
+                  <p className="text-red-700 text-sm font-medium">{error}</p>
+                </div>
+              )}
 
-            <p className="text-sm text-blue-500 hover:underline mb-4 cursor-pointer" onClick={() => navigate('/forgot-password')}>
-              Forgot Password?
-            </p>
-            <p className="text-sm text-gray-600 mb-5">Don’t have an account?</p>
+              {/* Login Button */}
+              <button 
+                type="submit" 
+                className="w-full bg-gradient-to-r from-primaryColor to-irisBlueColor text-white font-semibold py-3.5 rounded-xl hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center gap-2"
+              >
+                <span>Login</span>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+              </button>
 
+              {/* Forgot Password */}
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={() => navigate('/forgot-password')}
+                  className="text-sm text-primaryColor hover:text-irisBlueColor font-medium hover:underline transition-colors"
+                >
+                  Forgot Password?
+                </button>
+              </div>
+            </form>
+
+            {/* Divider */}
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-200"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-4 bg-white text-textColor">Don't have an account?</span>
+              </div>
+            </div>
+
+            {/* Sign Up Button */}
             <button
               type="button"
               onClick={() => navigate('/signup')}
-              className="w-full py-3 px-6 rounded-[50px] font-semibold bg-green-500 text-white hover:bg-green-600 transition duration-300"
+              className="w-full py-3.5 px-6 rounded-xl font-semibold bg-white border-2 border-primaryColor text-primaryColor hover:bg-primaryColor hover:text-white transition-all duration-300 transform hover:-translate-y-0.5 hover:shadow-lg"
             >
-              Sign Up
+              Create New Account
             </button>
-          </form>
+          </div>
         </div>
       </div>
     </section>
