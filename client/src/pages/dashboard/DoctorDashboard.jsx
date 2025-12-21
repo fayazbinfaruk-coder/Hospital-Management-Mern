@@ -202,7 +202,7 @@ const DoctorDashboard = () => {
       name: medicine.drugName,
       dosage: '',
       duration: '',
-      timing: { morning: false, noon: false, night: false }
+      timing: { morning: 0, noon: 0, night: 0 }
     }]);
   };
 
@@ -216,10 +216,10 @@ const DoctorDashboard = () => {
     ));
   };
 
-  const updateMedicineTiming = (medicineId, timingField) => {
+  const updateMedicineTiming = (medicineId, timingField, value) => {
     setSelectedMedicines(selectedMedicines.map(m =>
       m.medicine_id === medicineId 
-        ? { ...m, timing: { ...m.timing, [timingField]: !m.timing[timingField] } }
+        ? { ...m, timing: { ...m.timing, [timingField]: parseInt(value) || 0 } }
         : m
     ));
   };
@@ -705,30 +705,30 @@ const DoctorDashboard = () => {
                                                 )}
                                               </div>
                                               {/* Timing Display */}
-                                              {med.timing && (med.timing.morning || med.timing.noon || med.timing.night) && (
+                                              {med.timing && (med.timing.morning > 0 || med.timing.noon > 0 || med.timing.night > 0) && (
                                                 <div className="flex gap-2 mt-2">
-                                                  {med.timing.morning && (
-                                                    <span className="px-2 py-1 bg-yellow-100 text-yellow-700 text-xs rounded-full flex items-center gap-1">
+                                                  {med.timing.morning > 0 && (
+                                                    <span className="px-2 py-1 bg-yellow-100 text-yellow-700 text-xs rounded-full flex items-center gap-1 font-medium">
                                                       <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                                                         <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clipRule="evenodd" />
                                                       </svg>
-                                                      Morning
+                                                      Morning: {med.timing.morning} tablet{med.timing.morning > 1 ? 's' : ''}
                                                     </span>
                                                   )}
-                                                  {med.timing.noon && (
-                                                    <span className="px-2 py-1 bg-orange-100 text-orange-700 text-xs rounded-full flex items-center gap-1">
+                                                  {med.timing.noon > 0 && (
+                                                    <span className="px-2 py-1 bg-orange-100 text-orange-700 text-xs rounded-full flex items-center gap-1 font-medium">
                                                       <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                                                         <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clipRule="evenodd" />
                                                       </svg>
-                                                      Noon
+                                                      Noon: {med.timing.noon} tablet{med.timing.noon > 1 ? 's' : ''}
                                                     </span>
                                                   )}
-                                                  {med.timing.night && (
-                                                    <span className="px-2 py-1 bg-indigo-100 text-indigo-700 text-xs rounded-full flex items-center gap-1">
+                                                  {med.timing.night > 0 && (
+                                                    <span className="px-2 py-1 bg-indigo-100 text-indigo-700 text-xs rounded-full flex items-center gap-1 font-medium">
                                                       <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                                                         <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
                                                       </svg>
-                                                      Night
+                                                      Night: {med.timing.night} tablet{med.timing.night > 1 ? 's' : ''}
                                                     </span>
                                                   )}
                                                 </div>
@@ -849,52 +849,58 @@ const DoctorDashboard = () => {
                                   className="px-3 py-2 border border-gray-300 rounded-lg focus:border-purpleColor focus:ring-1 focus:ring-purpleColor/20 outline-none text-sm"
                                 />
                               </div>
-                              {/* Timing Checkboxes */}
+                              {/* Timing Inputs */}
                               <div className="mt-2">
-                                <p className="text-xs font-semibold text-headingColor mb-2">When to take:</p>
-                                <div className="flex gap-4">
-                                  <label className="flex items-center gap-2 cursor-pointer">
-                                    <input
-                                      type="checkbox"
-                                      checked={med.timing.morning}
-                                      onChange={() => updateMedicineTiming(med.medicine_id, 'morning')}
-                                      className="w-4 h-4 text-primaryColor border-gray-300 rounded focus:ring-primaryColor"
-                                    />
-                                    <span className="text-sm text-headingColor flex items-center gap-1">
-                                      <svg className="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                                <p className="text-xs font-semibold text-headingColor mb-2">Number of tablets to take:</p>
+                                <div className="grid grid-cols-3 gap-3">
+                                  <div className="flex flex-col">
+                                    <label className="text-xs text-headingColor flex items-center gap-1 mb-1">
+                                      <svg className="w-3 h-3 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
                                         <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clipRule="evenodd" />
                                       </svg>
                                       Morning
-                                    </span>
-                                  </label>
-                                  <label className="flex items-center gap-2 cursor-pointer">
+                                    </label>
                                     <input
-                                      type="checkbox"
-                                      checked={med.timing.noon}
-                                      onChange={() => updateMedicineTiming(med.medicine_id, 'noon')}
-                                      className="w-4 h-4 text-primaryColor border-gray-300 rounded focus:ring-primaryColor"
+                                      type="number"
+                                      min="0"
+                                      value={med.timing.morning}
+                                      onChange={(e) => updateMedicineTiming(med.medicine_id, 'morning', e.target.value)}
+                                      className="px-2 py-1.5 border border-gray-300 rounded-lg focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/20 outline-none text-sm"
+                                      placeholder="0"
                                     />
-                                    <span className="text-sm text-headingColor flex items-center gap-1">
-                                      <svg className="w-4 h-4 text-orange-500" fill="currentColor" viewBox="0 0 20 20">
+                                  </div>
+                                  <div className="flex flex-col">
+                                    <label className="text-xs text-headingColor flex items-center gap-1 mb-1">
+                                      <svg className="w-3 h-3 text-orange-500" fill="currentColor" viewBox="0 0 20 20">
                                         <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clipRule="evenodd" />
                                       </svg>
                                       Noon
-                                    </span>
-                                  </label>
-                                  <label className="flex items-center gap-2 cursor-pointer">
+                                    </label>
                                     <input
-                                      type="checkbox"
-                                      checked={med.timing.night}
-                                      onChange={() => updateMedicineTiming(med.medicine_id, 'night')}
-                                      className="w-4 h-4 text-primaryColor border-gray-300 rounded focus:ring-primaryColor"
+                                      type="number"
+                                      min="0"
+                                      value={med.timing.noon}
+                                      onChange={(e) => updateMedicineTiming(med.medicine_id, 'noon', e.target.value)}
+                                      className="px-2 py-1.5 border border-gray-300 rounded-lg focus:border-orange-400 focus:ring-1 focus:ring-orange-400/20 outline-none text-sm"
+                                      placeholder="0"
                                     />
-                                    <span className="text-sm text-headingColor flex items-center gap-1">
-                                      <svg className="w-4 h-4 text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
+                                  </div>
+                                  <div className="flex flex-col">
+                                    <label className="text-xs text-headingColor flex items-center gap-1 mb-1">
+                                      <svg className="w-3 h-3 text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
                                         <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
                                       </svg>
                                       Night
-                                    </span>
-                                  </label>
+                                    </label>
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      value={med.timing.night}
+                                      onChange={(e) => updateMedicineTiming(med.medicine_id, 'night', e.target.value)}
+                                      className="px-2 py-1.5 border border-gray-300 rounded-lg focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400/20 outline-none text-sm"
+                                      placeholder="0"
+                                    />
+                                  </div>
                                 </div>
                               </div>
                             </div>

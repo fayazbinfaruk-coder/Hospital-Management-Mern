@@ -160,9 +160,9 @@ export const createPrescription = async (req, res) => {
         dosage: med.dosage || '',
         duration: med.duration || '',
         timing: {
-          morning: med.timing?.morning || false,
-          noon: med.timing?.noon || false,
-          night: med.timing?.night || false
+          morning: med.timing?.morning || 0,
+          noon: med.timing?.noon || 0,
+          night: med.timing?.night || 0
         }
       }))
     });

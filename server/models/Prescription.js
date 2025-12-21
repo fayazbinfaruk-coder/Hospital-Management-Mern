@@ -36,16 +36,16 @@ const prescriptionSchema = new mongoose.Schema({
     },
     timing: {
       morning: {
-        type: Boolean,
-        default: false
+        type: Number,
+        default: 0
       },
       noon: {
-        type: Boolean,
-        default: false
+        type: Number,
+        default: 0
       },
       night: {
-        type: Boolean,
-        default: false
+        type: Number,
+        default: 0
       }
     }
   }],
