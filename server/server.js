@@ -10,6 +10,7 @@ import ambulanceRoutes from './routes/ambulanceRoutes.js';
 import bloodRoutes from './routes/bloodRoutes.js';
 import donorRoutes from './routes/donorRoutes.js';
 import driverRoutes from './routes/driverRoutes.js';
+import appointmentRoutes from './routes/appointmentRoutes.js';
 
 dotenv.config();
 connectDB(); 
@@ -24,6 +25,7 @@ app.use('/api/ambulance', ambulanceRoutes);
 app.use('/api/blood', bloodRoutes);
 app.use('/api/donor', donorRoutes);
 app.use('/api/driver', driverRoutes);
+app.use('/api/appointment', appointmentRoutes);
 
 
 

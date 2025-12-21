@@ -5,7 +5,8 @@ const doctorSchema = new mongoose.Schema({
   specialization: String,
   available_slots: [{
     date: String,
-    time: String
+    time: String,
+    booked_count: { type: Number, default: 0 }
   }]
 });
 

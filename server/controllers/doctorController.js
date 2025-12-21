@@ -14,13 +14,19 @@ export const getDoctorDashboard = async (req, res) => {
       return res.status(404).json({ message: 'Doctor profile not found.' });
     }
 
-    const appointments = await Appointment.find({ doctor_id: doctor._id })
-      .populate('patient_id', 'name') 
+    const appointments = await Appointment.find({ 
+      doctor_id: doctor._id,
+      status: { $nin: ['cancelled'] }
+    })
+      .populate('patient_id', 'name phone email') 
       .sort({ date: 1, time: 1 });
 
     const formattedAppointments = appointments.map((appt) => ({
       _id: appt._id,
       patient_name: appt.patient_id.name,
+      patient_phone: appt.patient_id.phone,
+      patient_email: appt.patient_id.email,
+      patient_id: appt.patient_id._id,
       date: appt.date,
       time: appt.time,
       status: appt.status
