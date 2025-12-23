@@ -6,11 +6,14 @@ const Layout = () => {
   const location = useLocation();
   const token = localStorage.getItem('token');
 
-  const hideHeaderPaths = ['/', '/login', '/signup', '/forgot-password'];
+  // Public pages (no authentication required)
+  const publicPaths = ['/', '/home', '/login', '/signup', '/forgot-password'];
   
-  const shouldShowHeader = token && !hideHeaderPaths.includes(location.pathname);
-  const shouldShowFooter = !['/','/login', '/signup', '/forgot-password'].includes(location.pathname);
-
+  // Show header on home page (public) or when user is logged in
+  const shouldShowHeader = publicPaths.includes(location.pathname) || token;
+  
+  // Show footer on all pages except login/signup/forgot-password
+  const shouldShowFooter = !['/login', '/signup', '/forgot-password'].includes(location.pathname);
 
   return (
     <div className="flex flex-col min-h-screen">

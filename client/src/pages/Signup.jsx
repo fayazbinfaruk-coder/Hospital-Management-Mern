@@ -30,6 +30,10 @@ const Signup = () => {
     try {
       const res = await axios.post('/api/users/register', formData);
       localStorage.setItem('token', res.data.token);
+      
+      // Trigger auth change event to update navbar
+      window.dispatchEvent(new Event('authChange'));
+      
       navigate('/account');
     } catch (err) {
       console.error('Registration failed:', err.response?.data || err.message || err);
@@ -41,6 +45,17 @@ const Signup = () => {
     <section className="min-h-screen flex items-center justify-center bg-gradient-to-br from-irisBlueColor/10 via-white to-blue-50 py-12 px-4">
       <div className="container">
         <div className="max-w-2xl mx-auto">
+          {/* Back to Home Button */}
+          <button
+            onClick={() => navigate('/')}
+            className="mb-6 inline-flex items-center gap-2 text-primaryColor hover:text-irisBlueColor font-semibold transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Back to Home
+          </button>
+          
           <div className="bg-white rounded-2xl shadow-2xl p-8 border border-gray-100">
             {/* Header */}
             <div className="text-center mb-8">

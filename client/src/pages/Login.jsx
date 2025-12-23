@@ -28,6 +28,9 @@ const Login = () => {
       localStorage.setItem('token', res.data.token);
       localStorage.setItem('user', JSON.stringify(res.data.user)); 
 
+      // Trigger auth change event to update navbar
+      window.dispatchEvent(new Event('authChange'));
+
       const userRole = res.data.user.role;
 
       if (userRole === 'admin') {
@@ -51,6 +54,17 @@ const Login = () => {
     <section className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-irisBlueColor/10 py-12 px-4">
       <div className="container">
         <div className="max-w-md mx-auto">
+          {/* Back to Home Button */}
+          <button
+            onClick={() => navigate('/')}
+            className="mb-6 inline-flex items-center gap-2 text-primaryColor hover:text-irisBlueColor font-semibold transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Back to Home
+          </button>
+          
           <div className="bg-white rounded-2xl shadow-2xl p-8 border border-gray-100 transform hover:scale-[1.01] transition-transform duration-300">
             {/* Header */}
             <div className="text-center mb-8">
