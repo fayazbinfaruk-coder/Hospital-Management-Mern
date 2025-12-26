@@ -278,7 +278,6 @@ const DoctorDashboard = () => {
     if (selectedMedicines.find((m) => m.medicine_id === medicine._id)) {
       return alert('Medicine already added');
     }
-
     setSelectedMedicines([
       ...selectedMedicines,
       {
@@ -346,6 +345,9 @@ const DoctorDashboard = () => {
       )
     );
   };
+
+  // Get current appointment being prescribed
+  const currentAppointment = appointments.find((a) => a._id === showFormId);
 
   if (loading) {
     return (
@@ -694,9 +696,93 @@ const DoctorDashboard = () => {
                 )}
 
                 {/* Prescription Form */}
-                {showFormId && (
+                {showFormId && currentAppointment && (
                   <div className="bg-white rounded-2xl shadow-2xl p-8 border border-gray-100 animate-fadeIn mt-6">
-                    <div className="flex items-center gap-3 mb-6">
+                    {/* ========== PATIENT DETAILS SECTION ========== */}
+                    <div className="bg-gradient-to-r from-primaryColor/10 to-irisBlueColor/10 rounded-xl p-6 mb-6 border border-primaryColor/20">
+                      <h4 className="text-sm font-semibold text-textColor mb-3">
+                        PATIENT INFORMATION
+                      </h4>
+                      <div className="flex items-center gap-4">
+                        {/* Patient Avatar */}
+                        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primaryColor to-yellowColor flex items-center justify-center text-white font-bold text-2xl shadow-md">
+                          {currentAppointment.patient_name?.charAt(0).toUpperCase()}
+                        </div>
+
+                        {/* Patient Details */}
+                        <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4">
+                          {/* Name */}
+                          <div>
+                            <p className="text-xs text-textColor font-semibold mb-1">
+                              PATIENT NAME
+                            </p>
+                            <p className="text-lg font-bold text-headingColor">
+                              {currentAppointment.patient_name}
+                            </p>
+                          </div>
+
+                          {/* Email */}
+                          <div>
+                            <p className="text-xs text-textColor font-semibold mb-1">
+                              EMAIL
+                            </p>
+                            <p className="text-sm text-headingColor break-words">
+                              {currentAppointment.patient_email}
+                            </p>
+                          </div>
+
+                          {/* Phone */}
+                          <div>
+                            <p className="text-xs text-textColor font-semibold mb-1">
+                              PHONE
+                            </p>
+                            <p className="text-sm text-headingColor">
+                              {currentAppointment.patient_phone}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Appointment Details */}
+                      <div className="mt-4 pt-4 border-t border-primaryColor/20 grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div>
+                          <p className="text-xs text-textColor font-semibold mb-1">
+                            APPOINTMENT DATE
+                          </p>
+                          <p className="text-sm font-semibold text-headingColor">
+                            {currentAppointment.date}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-textColor font-semibold mb-1">
+                            APPOINTMENT TIME
+                          </p>
+                          <p className="text-sm font-semibold text-headingColor">
+                            {formatTime(currentAppointment.time)}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-textColor font-semibold mb-1">
+                            STATUS
+                          </p>
+                          <span className="inline-block px-3 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded-full">
+                            {currentAppointment.status.charAt(0).toUpperCase() +
+                              currentAppointment.status.slice(1)}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="text-xs text-textColor font-semibold mb-1">
+                            APPOINTMENT ID
+                          </p>
+                          <p className="text-xs font-mono text-gray-600">
+                            {currentAppointment._id.slice(-8)}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* ========== PRESCRIPTION FORM ICON & TITLE ========== */}
+                    <div className="flex items-center gap-3 mb-6 pb-6 border-b-2 border-gray-200">
                       <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purpleColor to-irisBlueColor flex items-center justify-center">
                         <svg
                           className="w-6 h-6 text-white"
@@ -717,7 +803,7 @@ const DoctorDashboard = () => {
                           Write Prescription
                         </h4>
                         <p className="text-sm text-textColor">
-                          Add treatment details for the patient
+                          Add medicines, notes, and tests for treatment
                         </p>
                       </div>
                     </div>
@@ -999,7 +1085,7 @@ const DoctorDashboard = () => {
                         </div>
                       </div>
 
-                      {/* Test Investigation Section (moved inside prescription form) */}
+                      {/* Test Investigation Section */}
                       <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 mb-6">
                         <h3 className="text-xl font-bold text-headingColor mb-4">
                           Prescribe Tests (Optional)
@@ -1214,11 +1300,13 @@ const DoctorDashboard = () => {
                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
                               {group.slots.map((slot, idx) => (
                                 <div key={idx} className="relative group">
-                                  <div className={`p-4 rounded-xl border-2 transition-all duration-300 ${
-                                    slot.bookedcount && slot.bookedcount > 0
-                                      ? 'bg-blue-50 border-blue-300 shadow-sm'
-                                      : 'bg-white border-gray-200 hover:border-irisBlueColor hover:shadow-md'
-                                  }`}>
+                                  <div
+                                    className={`p-4 rounded-xl border-2 transition-all duration-300 ${
+                                      slot.bookedcount && slot.bookedcount > 0
+                                        ? 'bg-blue-50 border-blue-300 shadow-sm'
+                                        : 'bg-white border-gray-200 hover:border-irisBlueColor hover:shadow-md'
+                                    }`}
+                                  >
                                     <div className="text-center">
                                       <div className="flex items-center justify-center gap-1 mb-2">
                                         <svg
@@ -1444,7 +1532,7 @@ const DoctorDashboard = () => {
                                                   {med.dosage && (
                                                     <span className="text-xs text-textColor">
                                                       <strong>
-                                                        Dosage
+                                                        Dosage:
                                                       </strong>
                                                       {med.dosage}
                                                     </span>
@@ -1452,7 +1540,7 @@ const DoctorDashboard = () => {
                                                   {med.duration && (
                                                     <span className="text-xs text-textColor">
                                                       <strong>
-                                                        Duration
+                                                        Duration:
                                                       </strong>
                                                       {med.duration}
                                                     </span>
@@ -1460,7 +1548,8 @@ const DoctorDashboard = () => {
                                                 </div>
 
                                                 {med.timing &&
-                                                  (med.timing.morning !== 0 ||
+                                                  (med.timing.morning !==
+                                                    0 ||
                                                     med.timing.noon !==
                                                       0 ||
                                                     med.timing.night !==
