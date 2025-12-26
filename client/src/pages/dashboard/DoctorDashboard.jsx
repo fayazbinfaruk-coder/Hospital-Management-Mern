@@ -96,7 +96,7 @@ const DoctorDashboard = () => {
           headers,
         });
         const data = res.data;
-        setTestSuggestions(Array.isArray(data) ? data : (data.tests || []));
+        setTestSuggestions(Array.isArray(data) ? data : data.tests || []);
       } catch (err) {
         console.error('Test search failed', err);
       } finally {
@@ -218,7 +218,7 @@ const DoctorDashboard = () => {
       }
 
       // include selected tests in the prescription request so backend creates TestReport
-      const res = await axios.post(
+      await axios.post(
         '/api/doctor/prescribe',
         {
           appointment_id: appointmentId,
@@ -263,10 +263,9 @@ const DoctorDashboard = () => {
 
   const fetchPatientHistory = async (patientId) => {
     try {
-      const res = await axios.get(
-        `/api/doctor/patient-history/${patientId}`,
-        { headers }
-      );
+      const res = await axios.get(`/api/doctor/patient-history/${patientId}`, {
+        headers,
+      });
       setPatientHistory(res.data.appointments || []);
       setSelectedPatient(patientId);
     } catch (err) {
@@ -346,6 +345,19 @@ const DoctorDashboard = () => {
     );
   };
 
+  const sortAppointmentsByDateTime = (a, b) =>
+    new Date(`${a.date}T${a.time}`) - new Date(`${b.date}T${b.time}`);
+
+  const bookedAppointments = appointments
+    .filter((a) => a.status === 'booked')
+    .slice()
+    .sort(sortAppointmentsByDateTime);
+
+  const treatedAppointments = appointments
+    .filter((a) => a.status === 'treated')
+    .slice()
+    .sort(sortAppointmentsByDateTime);
+
   // Get current appointment being prescribed
   const currentAppointment = appointments.find((a) => a._id === showFormId);
 
@@ -372,9 +384,7 @@ const DoctorDashboard = () => {
           <h2 className="text-4xl font-bold text-headingColor mb-2">
             Doctor Dashboard
           </h2>
-          <p className="text-textColor">
-            Manage your schedule and appointments
-          </p>
+          <p className="text-textColor">Manage your schedule and appointments</p>
         </div>
 
         {/* Specialization Card */}
@@ -399,9 +409,7 @@ const DoctorDashboard = () => {
               <h3 className="text-xl font-bold text-headingColor">
                 Specialization
               </h3>
-              <p className="text-sm text-textColor">
-                Set your medical specialty
-              </p>
+              <p className="text-sm text-textColor">Set your medical specialty</p>
             </div>
           </div>
 
@@ -573,7 +581,8 @@ const DoctorDashboard = () => {
             {/* Appointments Tab */}
             {activeTab === 'appointments' && (
               <div>
-                {appointments.length === 0 ? (
+                {bookedAppointments.length === 0 &&
+                treatedAppointments.length === 0 ? (
                   <div className="text-center py-12">
                     <svg
                       className="w-16 h-16 text-gray-300 mx-auto mb-4"
@@ -596,102 +605,233 @@ const DoctorDashboard = () => {
                     </p>
                   </div>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full">
-                      <thead>
-                        <tr className="bg-gradient-to-r from-primaryColor/10 to-yellowColor/10">
-                          <th className="px-6 py-4 text-left text-sm font-bold text-headingColor">
-                            Patient
-                          </th>
-                          <th className="px-6 py-4 text-left text-sm font-bold text-headingColor">
-                            Contact
-                          </th>
-                          <th className="px-6 py-4 text-left text-sm font-bold text-headingColor">
-                            Date
-                          </th>
-                          <th className="px-6 py-4 text-left text-sm font-bold text-headingColor">
-                            Time
-                          </th>
-                          <th className="px-6 py-4 text-center text-sm font-bold text-headingColor">
-                            Status
-                          </th>
-                          <th className="px-6 py-4 text-center text-sm font-bold text-headingColor">
-                            Actions
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-100">
-                        {appointments.map((appt) => (
-                          <tr key={appt._id} className="hover:bg-gray-50 transition-colors">
-                            <td className="px-6 py-4">
-                              <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primaryColor to-yellowColor flex items-center justify-center text-white font-semibold">
-                                  {appt.patient_name?.charAt(0).toUpperCase()}
+                  <div className="space-y-6">
+                    {/* Booked */}
+                    <details
+                      open
+                      className="bg-white border border-gray-100 rounded-2xl shadow-sm"
+                    >
+                      <summary className="cursor-pointer select-none px-6 py-4 flex items-center justify-between bg-gradient-to-r from-primaryColor/10 to-irisBlueColor/10 rounded-2xl">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
+                            <svg
+                              className="w-5 h-5 text-blue-700"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2"
+                              />
+                            </svg>
+                          </div>
+                          <div>
+                            <p className="text-lg font-bold text-headingColor">
+                              Booked Appointments
+                            </p>
+                            <p className="text-xs text-textColor">
+                              Sorted by time
+                            </p>
+                          </div>
+                        </div>
+
+                        <span className="px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700">
+                          {bookedAppointments.length}
+                        </span>
+                      </summary>
+
+                      <div className="p-6 space-y-3">
+                        {bookedAppointments.length === 0 ? (
+                          <p className="text-sm text-textColor">
+                            No booked appointments.
+                          </p>
+                        ) : (
+                          bookedAppointments.map((appt) => (
+                            <details
+                              key={appt._id}
+                              className="border-2 border-gray-200 rounded-xl bg-white overflow-hidden"
+                            >
+                              <summary className="cursor-pointer select-none px-4 py-4 hover:bg-gray-50 transition-colors flex items-center justify-between gap-4">
+                                <div className="flex items-center gap-3 min-w-0">
+                                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primaryColor to-yellowColor flex items-center justify-center text-white font-semibold">
+                                    {appt.patient_name
+                                      ?.charAt(0)
+                                      .toUpperCase()}
+                                  </div>
+                                  <div className="min-w-0">
+                                    <p className="font-semibold text-headingColor truncate">
+                                      {appt.patient_name}
+                                    </p>
+                                    <p className="text-xs text-textColor truncate">
+                                      {appt.patient_email}
+                                    </p>
+                                  </div>
                                 </div>
-                                <div>
-                                  <p className="font-semibold text-headingColor">
-                                    {appt.patient_name}
-                                  </p>
+
+                                <div className="text-right shrink-0">
                                   <p className="text-xs text-textColor">
-                                    {appt.patient_email}
+                                    {appt.date}
                                   </p>
+                                  <p className="text-sm font-bold text-headingColor">
+                                    {formatTime(appt.time)}
+                                  </p>
+                                  <span className="inline-flex mt-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
+                                    Booked
+                                  </span>
+                                </div>
+                              </summary>
+
+                              <div className="px-4 pb-4 pt-0">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 bg-gray-50 rounded-xl p-4">
+                                  <div>
+                                    <p className="text-xs text-textColor font-semibold">
+                                      Phone
+                                    </p>
+                                    <p className="text-sm text-headingColor">
+                                      {appt.patient_phone}
+                                    </p>
+                                  </div>
+                                  <div>
+                                    <p className="text-xs text-textColor font-semibold">
+                                      Appointment ID
+                                    </p>
+                                    <p className="text-xs font-mono text-gray-600">
+                                      {appt._id.slice(-8)}
+                                    </p>
+                                  </div>
+                                  <div className="flex items-end justify-start md:justify-end">
+                                    <button
+                                      onClick={() =>
+                                        setShowFormId(
+                                          showFormId === appt._id
+                                            ? null
+                                            : appt._id
+                                        )
+                                      }
+                                      className="px-4 py-2 bg-primaryColor hover:bg-primaryColor/90 text-white text-sm font-semibold rounded-lg transition-all duration-300 hover:shadow-lg"
+                                    >
+                                      Write Prescription
+                                    </button>
+                                  </div>
                                 </div>
                               </div>
-                            </td>
-                            <td className="px-6 py-4">
-                              <div className="flex items-center gap-2 text-textColor">
-                                <svg
-                                  className="w-4 h-4"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-                                  />
-                                </svg>
-                                <span className="text-sm">{appt.patient_phone}</span>
+                            </details>
+                          ))
+                        )}
+                      </div>
+                    </details>
+
+                    {/* Treated */}
+                    <details className="bg-white border border-gray-100 rounded-2xl shadow-sm">
+                      <summary className="cursor-pointer select-none px-6 py-4 flex items-center justify-between bg-gradient-to-r from-green-50 to-irisBlueColor/10 rounded-2xl">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center">
+                            <svg
+                              className="w-5 h-5 text-green-700"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                              />
+                            </svg>
+                          </div>
+                          <div>
+                            <p className="text-lg font-bold text-headingColor">
+                              Treated Appointments
+                            </p>
+                            <p className="text-xs text-textColor">
+                              Sorted by time
+                            </p>
+                          </div>
+                        </div>
+
+                        <span className="px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700">
+                          {treatedAppointments.length}
+                        </span>
+                      </summary>
+
+                      <div className="p-6 space-y-3">
+                        {treatedAppointments.length === 0 ? (
+                          <p className="text-sm text-textColor">
+                            No treated appointments.
+                          </p>
+                        ) : (
+                          treatedAppointments.map((appt) => (
+                            <details
+                              key={appt._id}
+                              className="border-2 border-gray-200 rounded-xl bg-white overflow-hidden"
+                            >
+                              <summary className="cursor-pointer select-none px-4 py-4 hover:bg-gray-50 transition-colors flex items-center justify-between gap-4">
+                                <div className="flex items-center gap-3 min-w-0">
+                                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primaryColor to-yellowColor flex items-center justify-center text-white font-semibold">
+                                    {appt.patient_name
+                                      ?.charAt(0)
+                                      .toUpperCase()}
+                                  </div>
+                                  <div className="min-w-0">
+                                    <p className="font-semibold text-headingColor truncate">
+                                      {appt.patient_name}
+                                    </p>
+                                    <p className="text-xs text-textColor truncate">
+                                      {appt.patient_email}
+                                    </p>
+                                  </div>
+                                </div>
+
+                                <div className="text-right shrink-0">
+                                  <p className="text-xs text-textColor">
+                                    {appt.date}
+                                  </p>
+                                  <p className="text-sm font-bold text-headingColor">
+                                    {formatTime(appt.time)}
+                                  </p>
+                                  <span className="inline-flex mt-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700">
+                                    Treated
+                                  </span>
+                                </div>
+                              </summary>
+
+                              <div className="px-4 pb-4 pt-0">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 bg-gray-50 rounded-xl p-4">
+                                  <div>
+                                    <p className="text-xs text-textColor font-semibold">
+                                      Phone
+                                    </p>
+                                    <p className="text-sm text-headingColor">
+                                      {appt.patient_phone}
+                                    </p>
+                                  </div>
+                                  <div>
+                                    <p className="text-xs text-textColor font-semibold">
+                                      Appointment ID
+                                    </p>
+                                    <p className="text-xs font-mono text-gray-600">
+                                      {appt._id.slice(-8)}
+                                    </p>
+                                  </div>
+                                  <div>
+                                    <p className="text-xs text-textColor font-semibold">
+                                      Email
+                                    </p>
+                                    <p className="text-sm text-headingColor break-words">
+                                      {appt.patient_email}
+                                    </p>
+                                  </div>
+                                </div>
                               </div>
-                            </td>
-                            <td className="px-6 py-4 text-textColor">{appt.date}</td>
-                            <td className="px-6 py-4 text-textColor">
-                              {formatTime(appt.time)}
-                            </td>
-                            <td className="px-6 py-4 text-center">
-                              <span
-                                className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${
-                                  appt.status === 'booked'
-                                    ? 'bg-blue-100 text-blue-700'
-                                    : appt.status === 'treated'
-                                    ? 'bg-green-100 text-green-700'
-                                    : 'bg-gray-100 text-gray-700'
-                                }`}
-                              >
-                                {appt.status.charAt(0).toUpperCase() +
-                                  appt.status.slice(1)}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 text-center">
-                              {appt.status === 'booked' && (
-                                <button
-                                  onClick={() =>
-                                    setShowFormId(
-                                      showFormId === appt._id ? null : appt._id
-                                    )
-                                  }
-                                  className="px-4 py-2 bg-primaryColor hover:bg-primaryColor/90 text-white text-sm font-semibold rounded-lg transition-all duration-300 hover:shadow-lg"
-                                >
-                                  Write Prescription
-                                </button>
-                              )}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                            </details>
+                          ))
+                        )}
+                      </div>
+                    </details>
                   </div>
                 )}
 
@@ -706,7 +846,9 @@ const DoctorDashboard = () => {
                       <div className="flex items-center gap-4">
                         {/* Patient Avatar */}
                         <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primaryColor to-yellowColor flex items-center justify-center text-white font-bold text-2xl shadow-md">
-                          {currentAppointment.patient_name?.charAt(0).toUpperCase()}
+                          {currentAppointment.patient_name
+                            ?.charAt(0)
+                            .toUpperCase()}
                         </div>
 
                         {/* Patient Details */}
@@ -852,64 +994,64 @@ const DoctorDashboard = () => {
                               )}
                             </div>
 
-                            {medicineSearch &&
-                              searchResults.length > 0 && (
-                                <div className="absolute z-10 w-full mt-2 bg-white border-2 border-gray-200 rounded-xl shadow-lg max-h-96 overflow-y-auto">
-                                  <div className="p-2 bg-gray-50 border-b border-gray-200">
-                                    <p className="text-xs text-textColor font-semibold">
-                                      {searchResults.length} medicines found
-                                    </p>
-                                  </div>
-                                  {searchResults.map((medicine) => (
-                                    <div
-                                      key={medicine._id}
-                                      onClick={() => {
-                                        handleAddMedicine(medicine);
-                                        setMedicineSearch('');
-                                        setSearchResults([]);
-                                      }}
-                                      className="px-4 py-3 hover:bg-purpleColor/5 cursor-pointer border-b border-gray-100 last:border-0 transition-colors"
-                                    >
-                                      <div className="flex items-start justify-between">
-                                        <div className="flex-1">
-                                          <p className="font-semibold text-headingColor">
-                                            {medicine.drugName}
-                                          </p>
-                                          <p className="text-xs text-textColor mt-1">
-                                            {medicine.description}
-                                          </p>
-                                          <div className="flex items-center gap-3 mt-2">
-                                            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
-                                              {medicine.category}
-                                            </span>
-                                            <span className="text-xs text-textColor">
-                                              {medicine.manufacturer}
-                                            </span>
-                                            <span className="text-xs text-green-600 font-semibold">
-                                              Stock {medicine.countInStock}
-                                            </span>
-                                          </div>
-                                        </div>
-                                        <div className="text-right ml-3">
-                                          <p className="text-sm font-bold text-primaryColor">
-                                            {medicine.price}
-                                          </p>
-                                          <p className="text-xs text-textColor">
-                                            {medicine.consumeType}
-                                          </p>
+                            {medicineSearch && searchResults.length > 0 && (
+                              <div className="absolute z-10 w-full mt-2 bg-white border-2 border-gray-200 rounded-xl shadow-lg max-h-96 overflow-y-auto">
+                                <div className="p-2 bg-gray-50 border-b border-gray-200">
+                                  <p className="text-xs text-textColor font-semibold">
+                                    {searchResults.length} medicines found
+                                  </p>
+                                </div>
+                                {searchResults.map((medicine) => (
+                                  <div
+                                    key={medicine._id}
+                                    onClick={() => {
+                                      handleAddMedicine(medicine);
+                                      setMedicineSearch('');
+                                      setSearchResults([]);
+                                    }}
+                                    className="px-4 py-3 hover:bg-purpleColor/5 cursor-pointer border-b border-gray-100 last:border-0 transition-colors"
+                                  >
+                                    <div className="flex items-start justify-between">
+                                      <div className="flex-1">
+                                        <p className="font-semibold text-headingColor">
+                                          {medicine.drugName}
+                                        </p>
+                                        <p className="text-xs text-textColor mt-1">
+                                          {medicine.description}
+                                        </p>
+                                        <div className="flex items-center gap-3 mt-2">
+                                          <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
+                                            {medicine.category}
+                                          </span>
+                                          <span className="text-xs text-textColor">
+                                            {medicine.manufacturer}
+                                          </span>
+                                          <span className="text-xs text-green-600 font-semibold">
+                                            Stock {medicine.countInStock}
+                                          </span>
                                         </div>
                                       </div>
+                                      <div className="text-right ml-3">
+                                        <p className="text-sm font-bold text-primaryColor">
+                                          {medicine.price}
+                                        </p>
+                                        <p className="text-xs text-textColor">
+                                          {medicine.consumeType}
+                                        </p>
+                                      </div>
                                     </div>
-                                  ))}
-                                </div>
-                              )}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
 
                             {medicineSearch &&
                               !isSearching &&
                               searchResults.length === 0 && (
                                 <div className="absolute z-10 w-full mt-2 bg-white border-2 border-gray-200 rounded-xl shadow-lg p-4">
                                   <p className="text-sm text-textColor text-center">
-                                    No medicines found matching "{medicineSearch}"
+                                    No medicines found matching "
+                                    {medicineSearch}"
                                   </p>
                                 </div>
                               )}
@@ -1210,7 +1352,7 @@ const DoctorDashboard = () => {
                           >
                             <div className="text-center">
                               <p className="text-sm font-bold">
-                                {newSlot.time === time ? formatTime(time) : formatTime(time)}
+                                {formatTime(time)}
                               </p>
                             </div>
                           </button>
@@ -1225,8 +1367,13 @@ const DoctorDashboard = () => {
                       onClick={handleAddSlot}
                       className="w-full px-6 py-3 bg-gradient-to-r from-irisBlueColor to-primaryColor text-white font-semibold rounded-xl hover:shadow-lg transition-all duration-300"
                     >
-                      Add Slot {new Date(newSlot.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} at{' '}
-                      {formatTime(newSlot.time)}
+                      Add Slot{' '}
+                      {new Date(newSlot.date).toLocaleDateString('en-US', {
+                        weekday: 'short',
+                        month: 'short',
+                        day: 'numeric',
+                      })}{' '}
+                      at {formatTime(newSlot.time)}
                     </button>
                   )}
                 </div>
@@ -1289,7 +1436,8 @@ const DoctorDashboard = () => {
                               </div>
                               <div className="text-right">
                                 <span className="bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg font-semibold text-sm">
-                                  {group.slots.length} Slot{group.slots.length !== 1 ? 's' : ''}
+                                  {group.slots.length} Slot
+                                  {group.slots.length !== 1 ? 's' : ''}
                                 </span>
                               </div>
                             </div>
@@ -1311,7 +1459,8 @@ const DoctorDashboard = () => {
                                       <div className="flex items-center justify-center gap-1 mb-2">
                                         <svg
                                           className={`w-4 h-4 ${
-                                            slot.bookedcount && slot.bookedcount > 0
+                                            slot.bookedcount &&
+                                            slot.bookedcount > 0
                                               ? 'text-blue-600'
                                               : 'text-primaryColor'
                                           }`}
@@ -1343,7 +1492,8 @@ const DoctorDashboard = () => {
                                             <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
                                           </svg>
                                           <span className="text-xs font-semibold text-blue-700">
-                                            {slot.bookedcount} Patient{slot.bookedcount !== 1 ? 's' : ''}
+                                            {slot.bookedcount} Patient
+                                            {slot.bookedcount !== 1 ? 's' : ''}
                                           </span>
                                         </div>
                                         <div className="flex justify-center gap-0.5">
@@ -1453,7 +1603,8 @@ const DoctorDashboard = () => {
                           </div>
                           <div>
                             <div className="bg-green-100 text-green-700 px-4 py-2 rounded-lg font-semibold mb-2">
-                              {patient.total_visits} Visit{patient.total_visits !== 1 ? 's' : ''}
+                              {patient.total_visits} Visit
+                              {patient.total_visits !== 1 ? 's' : ''}
                             </div>
                             <button className="text-primaryColor hover:text-irisBlueColor font-semibold text-sm flex items-center gap-1">
                               View History
@@ -1523,37 +1674,27 @@ const DoctorDashboard = () => {
                                                 className="bg-white p-3 rounded-lg"
                                               >
                                                 <p className="font-semibold text-sm text-headingColor">
-                                                  {
-                                                    med.medicine_id
-                                                      ?.drugName
-                                                  }
+                                                  {med.medicine_id?.drugName}
                                                 </p>
                                                 <div className="flex gap-4 mt-1">
                                                   {med.dosage && (
                                                     <span className="text-xs text-textColor">
-                                                      <strong>
-                                                        Dosage:
-                                                      </strong>
+                                                      <strong>Dosage:</strong>
                                                       {med.dosage}
                                                     </span>
                                                   )}
                                                   {med.duration && (
                                                     <span className="text-xs text-textColor">
-                                                      <strong>
-                                                        Duration:
-                                                      </strong>
+                                                      <strong>Duration:</strong>
                                                       {med.duration}
                                                     </span>
                                                   )}
                                                 </div>
 
                                                 {med.timing &&
-                                                  (med.timing.morning !==
-                                                    0 ||
-                                                    med.timing.noon !==
-                                                      0 ||
-                                                    med.timing.night !==
-                                                      0) && (
+                                                  (med.timing.morning !== 0 ||
+                                                    med.timing.noon !== 0 ||
+                                                    med.timing.night !== 0) && (
                                                     <div className="flex gap-2 mt-2">
                                                       {med.timing.morning !==
                                                         0 && (
@@ -1569,15 +1710,12 @@ const DoctorDashboard = () => {
                                                               clipRule="evenodd"
                                                             />
                                                           </svg>
-                                                          Morning{' '}
-                                                          {
-                                                            med.timing
-                                                              .morning
-                                                          }{' '}
+                                                          Morning {med.timing.morning}{' '}
                                                           tablet
-                                                          {med.timing
-                                                            .morning !==
-                                                          1 ? 's' : ''}
+                                                          {med.timing.morning !==
+                                                          1
+                                                            ? 's'
+                                                            : ''}
                                                         </span>
                                                       )}
                                                       {med.timing.noon !==
@@ -1594,11 +1732,11 @@ const DoctorDashboard = () => {
                                                               clipRule="evenodd"
                                                             />
                                                           </svg>
-                                                          Noon{' '}
-                                                          {med.timing.noon}{' '}
+                                                          Noon {med.timing.noon}{' '}
                                                           tablet
-                                                          {med.timing.noon !==
-                                                          1 ? 's' : ''}
+                                                          {med.timing.noon !== 1
+                                                            ? 's'
+                                                            : ''}
                                                         </span>
                                                       )}
                                                       {med.timing.night !==
@@ -1611,11 +1749,11 @@ const DoctorDashboard = () => {
                                                           >
                                                             <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
                                                           </svg>
-                                                          Night{' '}
-                                                          {med.timing.night}{' '}
+                                                          Night {med.timing.night}{' '}
                                                           tablet
-                                                          {med.timing.night !==
-                                                          1 ? 's' : ''}
+                                                          {med.timing.night !== 1
+                                                            ? 's'
+                                                            : ''}
                                                         </span>
                                                       )}
                                                     </div>
