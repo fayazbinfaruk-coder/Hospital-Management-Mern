@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 const PatientDashboard = () => {
+  const navigate = useNavigate();
   const token = localStorage.getItem('token');
   const headers = { Authorization: `Bearer ${token}` };
 
@@ -105,6 +107,10 @@ const PatientDashboard = () => {
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to cancel appointment.');
     }
+  };
+
+  const viewPrescription = (appointmentId) => {
+    navigate('/prescriptions', { state: { appointmentId } });
   };
 
   const requestAmbulance = async () => {
@@ -313,7 +319,13 @@ const PatientDashboard = () => {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {appointments.map((appt) => (
-                <div key={appt._id} className="border-2 border-gray-200 p-4 rounded-xl hover:border-primaryColor/50 transition-all">
+                <div 
+                  key={appt._id} 
+                  className={`border-2 border-gray-200 p-4 rounded-xl hover:border-primaryColor/50 transition-all ${
+                    appt.status === 'treated' ? 'cursor-pointer hover:shadow-lg' : ''
+                  }`}
+                  onClick={() => appt.status === 'treated' && viewPrescription(appt._id)}
+                >
                   <div className="flex justify-between items-start mb-3">
                     <div>
                       <p className="font-bold text-headingColor text-lg">{appt.doctor_name}</p>
@@ -344,11 +356,19 @@ const PatientDashboard = () => {
                   </div>
                   {appt.status === 'booked' && (
                     <button
-                      onClick={() => cancelAppointment(appt._id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        cancelAppointment(appt._id);
+                      }}
                       className="mt-3 w-full px-4 py-2 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600 transition-colors"
                     >
                       Cancel Appointment
                     </button>
+                  )}
+                  {appt.status === 'treated' && (
+                    <div className="mt-3 w-full px-4 py-2 bg-gradient-to-r from-primaryColor to-irisBlueColor text-white font-semibold rounded-lg text-center">
+                      Click to View Prescription →
+                    </div>
                   )}
                 </div>
               ))}

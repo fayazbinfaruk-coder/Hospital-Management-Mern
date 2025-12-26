@@ -75,6 +75,24 @@ const prescriptionSchema = new mongoose.Schema({
   date: {
     type: Date,
     default: Date.now
+  },
+  payment_status: {
+    type: String,
+    enum: ['pending', 'completed'],
+    default: 'pending'
+  },
+  payment_amount: {
+    type: Number,
+    default: 500  // Default consultation fee
+  },
+  payment_date: {
+    type: Date,
+    default: null
+  },
+  payment_method: {
+    type: String,
+    enum: ['cash', 'card', 'mobile_banking', 'dummy'],
+    default: null
   }
 }, {
   timestamps: true

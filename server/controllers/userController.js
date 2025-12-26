@@ -190,13 +190,23 @@ export const getPatientPrescriptions = async (req, res) => {
 
     const transformedPrescriptions = prescriptions.map(p => ({
       _id: p._id,
-      doctor_id: {
+      doctor: {
         name: p.doctor_id?.user_id?.name || 'Unknown Doctor',  // ✅ Get name from nested user_id
         specialization: p.doctor_id?.specialization
       },
+      appointment: {
+        date: p.appointment_id?.date,
+        time: p.appointment_id?.time,
+        status: p.appointment_id?.status
+      },
       date: p.date,
       notes: p.notes,
-      status: p.status || 'pending',
+      payment: {
+        status: p.payment_status || 'pending',
+        amount: p.payment_amount || 500,
+        date: p.payment_date,
+        method: p.payment_method
+      },
       medicines: p.medicines.map(m => ({
         name: m.medicine_id?.drugName || `Medicine (${m.medicine_id?._id || 'N/A'})`,
         dosage: m.dosage || 'Not specified',
