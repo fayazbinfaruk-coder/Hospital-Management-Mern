@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import Chatbot from '../../components/Chatbot/Chatbot';
 
 const PatientDashboard = () => {
   const navigate = useNavigate();
@@ -22,11 +23,18 @@ const PatientDashboard = () => {
   const [matchedDonors, setMatchedDonors] = useState([]);
   const [requestMessage, setRequestMessage] = useState('');
   const [bloodRequests, setBloodRequests] = useState([]);
+  const [isChatbotOpen, setIsChatbotOpen] = useState(false);
+  const [patientName, setPatientName] = useState('');
 
   useEffect(() => {
     axios.get('/api/appointment/specialties', { headers }).then(res => setSpecialties(res.data));
     axios.get('/api/ambulance/my-requests', { headers }).then(res => setAmbulanceRequests(res.data));
     axios.get('/api/appointment/my', { headers }).then(res => setAppointments(res.data));
+    
+    // Fetch patient name for chatbot
+    axios.get('/api/users/profile', { headers })
+      .then(res => setPatientName(res.data.name))
+      .catch(err => console.error('Error fetching user data:', err));
   }, []);
 
   useEffect(() => {
@@ -506,6 +514,37 @@ const PatientDashboard = () => {
           </div>
         )}
       </div>
+
+      {/* Floating Chatbot Button */}
+      <button
+        onClick={() => setIsChatbotOpen(true)}
+        className="fixed bottom-8 right-8 w-16 h-16 bg-gradient-to-r from-primaryColor to-irisBlueColor text-white rounded-full shadow-2xl hover:shadow-3xl transform hover:scale-110 transition-all duration-300 flex items-center justify-center z-50 group"
+        title="Chat with Healthcare Assistant"
+      >
+        <svg 
+          className="w-8 h-8 group-hover:scale-110 transition-transform" 
+          fill="none" 
+          stroke="currentColor" 
+          viewBox="0 0 24 24"
+        >
+          <path 
+            strokeLinecap="round" 
+            strokeLinejoin="round" 
+            strokeWidth={2} 
+            d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" 
+          />
+        </svg>
+        <span className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-xs font-bold animate-pulse">
+          AI
+        </span>
+      </button>
+
+      {/* Chatbot Component */}
+      <Chatbot 
+        isOpen={isChatbotOpen}
+        onClose={() => setIsChatbotOpen(false)}
+        patientName={patientName}
+      />
     </div>
   );
 };
