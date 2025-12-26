@@ -2,7 +2,8 @@
 import express from 'express';
 import {
   requestAmbulance,
-  getMyAmbulanceRequests // NEW controller function
+  getMyAmbulanceRequests,
+  acceptFareProposal
 } from '../controllers/ambulanceController.js';
 import { requireAuth } from '../middleware/authMiddleware.js';
 
@@ -13,5 +14,8 @@ router.post('/request', requireAuth, requestAmbulance);
 
 // Patient fetches their own ambulance request status
 router.get('/my-requests', requireAuth, getMyAmbulanceRequests);
+
+// Patient accepts a fare proposal
+router.post('/accept-fare/:id', requireAuth, acceptFareProposal);
 
 export default router;

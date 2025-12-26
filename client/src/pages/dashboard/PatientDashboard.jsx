@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import MapWrapper from '../../components/Map';
 
 const PatientDashboard = () => {
   const token = localStorage.getItem('token');
@@ -14,6 +15,9 @@ const PatientDashboard = () => {
   const [availableSlots, setAvailableSlots] = useState([]);
   const [appointments, setAppointments] = useState([]);
   const [pickupLocation, setPickupLocation] = useState('');
+  const [pickupLat, setPickupLat] = useState(23.8103); // Dhaka lat
+  const [pickupLng, setPickupLng] = useState(90.4125); // Dhaka lng
+  const [mapCenter, setMapCenter] = useState({ lat: 23.8103, lng: 90.4125 });
   const [ambulanceRequests, setAmbulanceRequests] = useState([]);
   const [bloodType, setBloodType] = useState('');
   const [donorLocation, setDonorLocation] = useState('');
@@ -26,6 +30,11 @@ const PatientDashboard = () => {
     axios.get('/api/ambulance/my-requests', { headers }).then(res => setAmbulanceRequests(res.data));
     axios.get('/api/appointment/my', { headers }).then(res => setAppointments(res.data));
   }, []);
+
+  // keep map center synced with pickup coords
+  useEffect(() => {
+    setMapCenter({ lat: parseFloat(pickupLat) || 23.8103, lng: parseFloat(pickupLng) || 90.4125 });
+  }, [pickupLat, pickupLng]);
 
   useEffect(() => {
     axios.get('/api/blood/mine', { headers }).then(res => {
@@ -108,8 +117,32 @@ const PatientDashboard = () => {
   };
 
   const requestAmbulance = async () => {
-    await axios.post('/api/ambulance/request', { pickup_location: pickupLocation }, { headers });
+    await axios.post('/api/ambulance/request', { pickup_location: pickupLocation, pickup_lat: pickupLat, pickup_lng: pickupLng }, { headers });
     alert('Ambulance requested.');
+    const updated = await axios.get('/api/ambulance/my-requests', { headers });
+    setAmbulanceRequests(updated.data);
+  };
+
+  const useMyLocation = () => {
+    if (!navigator.geolocation) return alert('Geolocation not supported');
+    navigator.geolocation.getCurrentPosition((pos) => {
+      setPickupLat(pos.coords.latitude);
+      setPickupLng(pos.coords.longitude);
+      setPickupLocation('My Current Location');
+    }, (err) => {
+      alert('Unable to get location: ' + err.message);
+    });
+  };
+
+  const acceptFareProposal = async (requestId, driverId) => {
+    try {
+      await axios.post(`/api/ambulance/accept-fare/${requestId}`, { driverId }, { headers });
+      alert('Fare proposal accepted.');
+      const updated = await axios.get('/api/ambulance/my-requests', { headers });
+      setAmbulanceRequests(updated.data);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to accept fare.');
+    }
   };
 
   const requestBlood = async () => {
@@ -369,7 +402,7 @@ const PatientDashboard = () => {
               <p className="text-sm text-textColor">Emergency medical transport</p>
             </div>
           </div>
-          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex flex-col sm:flex-row gap-3">
             <input 
               type="text" 
               placeholder="Pickup Location" 
@@ -377,13 +410,27 @@ const PatientDashboard = () => {
               value={pickupLocation} 
               onChange={(e) => setPickupLocation(e.target.value)} 
             />
-            <button 
-              onClick={requestAmbulance} 
-              className="px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold rounded-xl hover:shadow-lg transition-all duration-300"
-            >
-              Request Ambulance
-            </button>
+            <div className="flex items-center gap-2">
+              <button type="button" onClick={useMyLocation} className="px-4 py-2 bg-gray-200 rounded">Use My Location</button>
+              <button 
+                onClick={requestAmbulance} 
+                className="px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold rounded-xl hover:shadow-lg transition-all duration-300"
+              >
+                Request Ambulance
+              </button>
+            </div>
           </div>
+        </div>
+
+        {/* Map showing pickup point and nearby drivers/proposals */}
+        <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
+          <h4 className="font-semibold text-headingColor mb-3">Location</h4>
+          <MapWrapper
+            apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}
+            center={mapCenter}
+            zoom={13}
+            markers={ambulanceRequests.map(r => r.pickup_lat && r.pickup_lng ? { position: { lat: r.pickup_lat, lng: r.pickup_lng }, title: r.pickup_location } : null).filter(Boolean)}
+          />
         </div>
 
         {ambulanceRequests.length > 0 && (
@@ -398,13 +445,37 @@ const PatientDashboard = () => {
                       <p className="text-sm text-textColor">Requested: {new Date(req.requested_at).toLocaleString()}</p>
                     </div>
                     <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                      req.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                      req.status === 'requested' ? 'bg-yellow-100 text-yellow-700' :
                       req.status === 'accepted' ? 'bg-green-100 text-green-700' :
+                      req.status === 'processing' ? 'bg-blue-100 text-blue-700' :
+                      req.status === 'completed' ? 'bg-purple-100 text-purple-700' :
                       'bg-gray-100 text-gray-700'
                     }`}>
                       {req.status}
                     </span>
                   </div>
+                  {req.fare_proposals && req.fare_proposals.length > 0 && req.status === 'requested' && (
+                    <div className="mt-4">
+                      <h4 className="font-semibold text-headingColor mb-2">Fare Proposals:</h4>
+                      <div className="space-y-2">
+                        {req.fare_proposals.map((proposal, idx) => (
+                          <div key={idx} className="flex justify-between items-center bg-gray-50 p-3 rounded-lg">
+                            <div>
+                              <p className="font-medium text-headingColor">{proposal.driver_id.name}</p>
+                              <p className="text-sm text-textColor">Phone: {proposal.driver_id.phone}</p>
+                              <p className="text-sm text-textColor">Fare: ${proposal.fare}</p>
+                            </div>
+                            <button
+                              onClick={() => acceptFareProposal(req._id, proposal.driver_id._id)}
+                              className="px-4 py-2 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600 transition-colors"
+                            >
+                              Accept
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
