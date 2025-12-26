@@ -12,56 +12,79 @@ import PatientDashboard from './pages/dashboard/PatientDashboard';
 import DoctorDashboard from './pages/dashboard/DoctorDashboard';
 import DonorDashboard from './pages/dashboard/DonorDashboard';
 import DriverDashboard from './pages/dashboard/DriverDashboard';
+import Prescriptions from './pages/Patient/Prescriptions'; // ✅ ADD THIS
 import ProtectedRoute from './components/ProtectedRoute';
-
 
 function App() {
   return (
     <Routes>
       <Route element={<Layout />}>
-        {/* Public Routes - Accessible without login */}
+        {/* Public Routes */}
         <Route path="/" element={<Home />} />
         <Route path="/home" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
 
-        {/* Protected Routes - Require authentication */}
-        <Route path="/account" element={
-          <ProtectedRoute>
-            <Account />
-          </ProtectedRoute>
-        } />
-        
-        <Route path="/admin-dashboard" element={
-          <ProtectedRoute>
-            <AdminDashboard />
-          </ProtectedRoute>
-        } />
+        {/* Protected Routes */}
+        <Route 
+          path="/account" 
+          element={
+            <ProtectedRoute>
+              <Account />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/dashboard/patient" 
+          element={
+            <ProtectedRoute>
+              <PatientDashboard />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/dashboard/doctor" 
+          element={
+            <ProtectedRoute>
+              <DoctorDashboard />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/dashboard/donor" 
+          element={
+            <ProtectedRoute>
+              <DonorDashboard />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/dashboard/driver" 
+          element={
+            <ProtectedRoute>
+              <DriverDashboard />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/admin-dashboard" 
+          element={
+            <ProtectedRoute>
+              <AdminDashboard />
+            </ProtectedRoute>
+          } 
+        />
 
-        <Route path="/dashboard/patient" element={
-          <ProtectedRoute>
-            <PatientDashboard />
-          </ProtectedRoute>
-        } />
-        
-        <Route path="/dashboard/doctor" element={
-          <ProtectedRoute>
-            <DoctorDashboard />
-          </ProtectedRoute>
-        } />
-        
-        <Route path="/dashboard/donor" element={
-          <ProtectedRoute>
-            <DonorDashboard />
-          </ProtectedRoute>
-        } />
-        
-        <Route path="/dashboard/driver" element={
-          <ProtectedRoute>
-            <DriverDashboard />
-          </ProtectedRoute>
-        } />
+        {/* ✅ ADD PRESCRIPTIONS ROUTE */}
+        <Route 
+          path="/prescriptions" 
+          element={
+            <ProtectedRoute>
+              <Prescriptions />
+            </ProtectedRoute>
+          } 
+        />
       </Route>
     </Routes>
   );

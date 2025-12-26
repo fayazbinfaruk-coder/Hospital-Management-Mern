@@ -176,15 +176,44 @@ export const getPatientPrescriptions = async (req, res) => {
     const Prescription = require('../models/Prescription.js').default;
     
     const prescriptions = await Prescription.find({ patient_id: req.user._id })
-      .populate('doctor_id', 'specialization')
+      .populate({
+        path: 'doctor_id',
+        select: 'specialization user_id',
+        populate: {
+          path: 'user_id',
+          select: 'name'  // ✅ Get doctor's name from User model
+        }
+      })
       .populate('appointment_id', 'date time status')
       .populate('medicines.medicine_id', 'drugName manufacturer description consumeType')
       .sort({ date: -1 });
 
+    const transformedPrescriptions = prescriptions.map(p => ({
+      _id: p._id,
+      doctor_id: {
+        name: p.doctor_id?.user_id?.name || 'Unknown Doctor',  // ✅ Get name from nested user_id
+        specialization: p.doctor_id?.specialization
+      },
+      date: p.date,
+      notes: p.notes,
+      status: p.status || 'pending',
+      medicines: p.medicines.map(m => ({
+        name: m.medicine_id?.drugName || `Medicine (${m.medicine_id?._id || 'N/A'})`,
+        dosage: m.dosage || 'Not specified',
+        duration: m.duration || 'Not specified',
+        timing: m.timing
+      })),
+      tests: p.tests.map(t => ({
+        name: t.test_name,
+        description: t.description,
+        status: t.status
+      }))
+    }));
+
     res.status(200).json({
       success: true,
-      count: prescriptions.length,
-      prescriptions
+      count: transformedPrescriptions.length,
+      prescriptions: transformedPrescriptions
     });
   } catch (error) {
     console.error('Error fetching prescriptions:', error);

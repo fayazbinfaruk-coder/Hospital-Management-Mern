@@ -6,10 +6,11 @@ import {
   updateUserProfile,
   verifyUserInfo,
   resetPassword,
-  getPatientPrescriptions
+  getPatientPrescriptions,
 } from '../controllers/userController.js';
 
 import { requireAuth } from '../middleware/authMiddleware.js';
+
 
 const router = express.Router();
 
