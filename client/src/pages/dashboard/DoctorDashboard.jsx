@@ -54,7 +54,7 @@ const DoctorDashboard = () => {
     fetchDoctorData();
   }, []);
 
-  // Dynamic medicine search with debouncing
+  // medicine search with debouncing
   useEffect(() => {
     const searchMedicines = async () => {
       if (!medicineSearch || medicineSearch.length < 1) {
