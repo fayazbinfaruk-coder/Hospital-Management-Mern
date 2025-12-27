@@ -18,8 +18,21 @@ const PatientDashboard = () => {
   const [appointments, setAppointments] = useState([]);
   const [pickupLocation, setPickupLocation] = useState('');
   const [ambulanceRequests, setAmbulanceRequests] = useState([]);
-  const [bloodType, setBloodType] = useState('');
-  const [donorLocation, setDonorLocation] = useState('');
+
+  // NEW: required fields (fetched from profile, not typed)
+  const [patientProfile, setPatientProfile] = useState({
+    name: '',
+    email: '',
+    phone: '',
+  });
+
+  // UPDATED: blood request inputs
+  const [bloodGroup, setBloodGroup] = useState('');
+  const [age, setAge] = useState('');
+  const [gender, setGender] = useState('');
+  const [note, setNote] = useState('');
+
+  // keep existing states untouched
   const [matchedDonors, setMatchedDonors] = useState([]);
   const [requestMessage, setRequestMessage] = useState('');
   const [bloodRequests, setBloodRequests] = useState([]);
@@ -30,10 +43,17 @@ const PatientDashboard = () => {
     axios.get('/api/appointment/specialties', { headers }).then(res => setSpecialties(res.data));
     axios.get('/api/ambulance/my-requests', { headers }).then(res => setAmbulanceRequests(res.data));
     axios.get('/api/appointment/my', { headers }).then(res => setAppointments(res.data));
-    
-    // Fetch patient name for chatbot
+
+    // Fetch patient profile (name/email/phone) + name for chatbot
     axios.get('/api/users/profile', { headers })
-      .then(res => setPatientName(res.data.name))
+      .then(res => {
+        setPatientName(res.data.name);
+        setPatientProfile({
+          name: res.data.name || '',
+          email: res.data.email || '',
+          phone: res.data.phone || '',
+        });
+      })
       .catch(err => console.error('Error fetching user data:', err));
   }, []);
 
@@ -57,7 +77,7 @@ const PatientDashboard = () => {
     setSelectedDoctor(doctorId);
     setSelectedDate('');
     setAvailableSlots([]);
-    
+
     // Generate next 7 days
     const dates = [];
     const today = new Date();
@@ -128,17 +148,38 @@ const PatientDashboard = () => {
 
   const requestBlood = async () => {
     try {
-      const res = await axios.post('/api/blood/request', {
-        blood_type: bloodType,
-        location: donorLocation
+      // client-side check (server will also check)
+      if (!patientProfile.name || !patientProfile.email || !patientProfile.phone) {
+        setRequestMessage('Please update your profile (name, email, phone) first.');
+        return;
+      }
+      if (!bloodGroup || !age || !gender) {
+        setRequestMessage('Blood group, age, and gender are required.');
+        return;
+      }
+
+      await axios.post('/api/blood/request', {
+        blood_group: bloodGroup,
+        age: Number(age),
+        gender,
+        note
       }, { headers });
+
       alert('Blood request sent successfully.');
       setMatchedDonors([]);
+
+      // clear inputs only
+      setBloodGroup('');
+      setAge('');
+      setGender('');
+      setNote('');
+      setRequestMessage('');
+
       const updated = await axios.get('/api/blood/mine', { headers });
       setBloodRequests(updated.data);
     } catch (err) {
       console.error('Failed to request blood:', err);
-      setRequestMessage('Failed to send blood request.');
+      setRequestMessage(err.response?.data?.message || 'Failed to send blood request.');
     }
   };
 
@@ -176,14 +217,14 @@ const PatientDashboard = () => {
 
           <div className="space-y-4">
             <div className="flex flex-col sm:flex-row gap-3">
-              <select 
+              <select
                 value={selectedSpecialty}
                 onChange={(e) => {
                   setSelectedSpecialty(e.target.value);
                   setDoctors([]);
                   setAvailableSlots([]);
                   setSelectedDoctor(null);
-                }} 
+                }}
                 className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primaryColor focus:ring-2 focus:ring-primaryColor/20 outline-none transition-all bg-white"
               >
                 <option value="">Select a Specialty</option>
@@ -191,8 +232,8 @@ const PatientDashboard = () => {
                   <option key={i} value={spec}>{spec}</option>
                 ))}
               </select>
-              <button 
-                onClick={fetchDoctors} 
+              <button
+                onClick={fetchDoctors}
                 disabled={!selectedSpecialty}
                 className="px-6 py-3 bg-gradient-to-r from-primaryColor to-irisBlueColor text-white font-semibold rounded-xl hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -205,8 +246,8 @@ const PatientDashboard = () => {
                 <h4 className="font-semibold text-headingColor mb-3">Available Doctors:</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {doctors.map((doc) => (
-                    <div 
-                      key={doc._id} 
+                    <div
+                      key={doc._id}
                       onClick={() => handleDoctorSelect(doc._id)}
                       className={`border-2 p-4 rounded-xl transition-all cursor-pointer ${selectedDoctor === doc._id ? 'border-primaryColor bg-primaryColor/5 shadow-lg' : 'border-gray-200 hover:border-primaryColor/50 hover:shadow-md'}`}
                     >
@@ -265,9 +306,9 @@ const PatientDashboard = () => {
                 <h4 className="font-semibold text-headingColor mb-3">Available Time Slots for {new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}:</h4>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
                   {availableSlots.map((slot, idx) => (
-                    <button 
-                      key={idx} 
-                      onClick={() => bookAppointment(slot)} 
+                    <button
+                      key={idx}
+                      onClick={() => bookAppointment(slot)}
                       className="group p-4 border-2 border-gray-200 rounded-xl hover:border-primaryColor hover:bg-gradient-to-br hover:from-primaryColor hover:to-irisBlueColor transition-all duration-300 text-left hover:shadow-lg hover:scale-105"
                     >
                       <div className="flex items-center gap-2 mb-2">
@@ -327,8 +368,8 @@ const PatientDashboard = () => {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {appointments.map((appt) => (
-                <div 
-                  key={appt._id} 
+                <div
+                  key={appt._id}
                   className={`border-2 border-gray-200 p-4 rounded-xl hover:border-primaryColor/50 transition-all ${
                     appt.status === 'treated' ? 'cursor-pointer hover:shadow-lg' : ''
                   }`}
@@ -398,15 +439,15 @@ const PatientDashboard = () => {
             </div>
           </div>
           <div className="flex flex-col sm:flex-row gap-3">
-            <input 
-              type="text" 
-              placeholder="Pickup Location" 
+            <input
+              type="text"
+              placeholder="Pickup Location"
               className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-red-500 focus:ring-2 focus:ring-red-500/20 outline-none transition-all"
-              value={pickupLocation} 
-              onChange={(e) => setPickupLocation(e.target.value)} 
+              value={pickupLocation}
+              onChange={(e) => setPickupLocation(e.target.value)}
             />
-            <button 
-              onClick={requestAmbulance} 
+            <button
+              onClick={requestAmbulance}
               className="px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold rounded-xl hover:shadow-lg transition-all duration-300"
             >
               Request Ambulance
@@ -452,29 +493,78 @@ const PatientDashboard = () => {
               <p className="text-sm text-textColor">Find blood donors near you</p>
             </div>
           </div>
+
+          {/* NEW: fetched required fields (read-only) */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+            <input
+              type="text"
+              placeholder="Name"
+              className="px-4 py-3 border-2 border-gray-200 rounded-xl bg-gray-50"
+              value={patientProfile.name}
+              disabled
+            />
+            <input
+              type="text"
+              placeholder="Email"
+              className="px-4 py-3 border-2 border-gray-200 rounded-xl bg-gray-50"
+              value={patientProfile.email}
+              disabled
+            />
+            <input
+              type="text"
+              placeholder="Phone"
+              className="px-4 py-3 border-2 border-gray-200 rounded-xl bg-gray-50"
+              value={patientProfile.phone}
+              disabled
+            />
+          </div>
+
+          {/* UPDATED: remove location, add age/gender/note */}
           <div className="flex flex-col sm:flex-row gap-3">
-            <input 
-              type="text" 
-              placeholder="Blood Type (e.g. A+)" 
+            <input
+              type="text"
+              placeholder="Blood Group (e.g. A+)"
               className="px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 outline-none transition-all"
-              value={bloodType} 
-              onChange={(e) => setBloodType(e.target.value)} 
+              value={bloodGroup}
+              onChange={(e) => setBloodGroup(e.target.value)}
             />
-            <input 
-              type="text" 
-              placeholder="Location" 
-              className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 outline-none transition-all"
-              value={donorLocation} 
-              onChange={(e) => setDonorLocation(e.target.value)} 
+
+            <input
+              type="number"
+              placeholder="Age"
+              className="px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 outline-none transition-all"
+              value={age}
+              onChange={(e) => setAge(e.target.value)}
             />
-            <button 
-              onClick={requestBlood} 
+
+            <select
+              className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 outline-none transition-all bg-white"
+              value={gender}
+              onChange={(e) => setGender(e.target.value)}
+            >
+              <option value="">Select Gender</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="other">Other</option>
+            </select>
+
+            <button
+              onClick={requestBlood}
               className="px-6 py-3 bg-gradient-to-r from-purple-500 to-purple-600 text-white font-semibold rounded-xl hover:shadow-lg transition-all duration-300"
             >
               Send Request
             </button>
           </div>
-          {requestMessage && <p className="text-green-600 mt-3">{requestMessage}</p>}
+
+          <textarea
+            placeholder="Note (optional)"
+            className="mt-3 w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 outline-none transition-all"
+            rows={3}
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+          />
+
+          {requestMessage && <p className="text-red-600 mt-3">{requestMessage}</p>}
         </div>
 
         {/* Blood Request Status */}
@@ -483,11 +573,13 @@ const PatientDashboard = () => {
             <h3 className="text-xl font-bold text-headingColor mb-4">Your Blood Requests</h3>
             <div className="space-y-4">
               {bloodRequests.map((req) => (
-                <div key={req._id} className="border-2 border-gray-200 p-4 rounded-xl">
+                <div key={req._id || req.id} className="border-2 border-gray-200 p-4 rounded-xl">
                   <div className="flex justify-between items-start mb-3">
                     <div>
-                      <p className="font-semibold text-headingColor">Blood Type: {req.blood_type}</p>
-                      <p className="text-sm text-textColor">Location: {req.location}</p>
+                      <p className="font-semibold text-headingColor">Blood Group: {req.blood_group || req.blood_type}</p>
+                      <p className="text-sm text-textColor">Age: {req.age}</p>
+                      <p className="text-sm text-textColor">Gender: {req.gender}</p>
+                      {req.note ? <p className="text-sm text-textColor">Note: {req.note}</p> : null}
                     </div>
                     <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
                       req.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
@@ -497,10 +589,13 @@ const PatientDashboard = () => {
                       {req.status}
                     </span>
                   </div>
+
                   <p className="text-sm text-textColor">Requested: {new Date(req.requested_at).toLocaleString()}</p>
+
                   {req.accepted_at && (
                     <p className="text-sm text-green-600">Accepted: {new Date(req.accepted_at).toLocaleString()}</p>
                   )}
+
                   {req.donor && (
                     <div className="mt-3 pt-3 border-t border-gray-200">
                       <p className="text-sm font-semibold text-headingColor">Donor Details:</p>
@@ -521,18 +616,8 @@ const PatientDashboard = () => {
         className="fixed bottom-8 right-8 w-16 h-16 bg-gradient-to-r from-primaryColor to-irisBlueColor text-white rounded-full shadow-2xl hover:shadow-3xl transform hover:scale-110 transition-all duration-300 flex items-center justify-center z-50 group"
         title="Chat with Healthcare Assistant"
       >
-        <svg 
-          className="w-8 h-8 group-hover:scale-110 transition-transform" 
-          fill="none" 
-          stroke="currentColor" 
-          viewBox="0 0 24 24"
-        >
-          <path 
-            strokeLinecap="round" 
-            strokeLinejoin="round" 
-            strokeWidth={2} 
-            d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" 
-          />
+        <svg className="w-8 h-8 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
         </svg>
         <span className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-xs font-bold animate-pulse">
           AI
@@ -540,7 +625,7 @@ const PatientDashboard = () => {
       </button>
 
       {/* Chatbot Component */}
-      <Chatbot 
+      <Chatbot
         isOpen={isChatbotOpen}
         onClose={() => setIsChatbotOpen(false)}
         patientName={patientName}
