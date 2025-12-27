@@ -90,7 +90,6 @@ export const getIncomingRequests = async (req, res) => {
     const donor = await BloodDonor.findOne({ user_id: req.user._id });
 
     if (!donor) {
-      console.warn("❌ Donor profile not found for user:", req.user._id);
       return res.status(404).json({ message: 'Donor profile not found.' });
     }
 
@@ -98,23 +97,43 @@ export const getIncomingRequests = async (req, res) => {
       return res.status(403).json({ message: 'You must be an active donor to view requests.' });
     }
 
-    const requests = await BloodRequest.find({ status: 'requested' }).populate('patient_id', 'name phone');
+    const requests = await BloodRequest.find({ status: 'requested' })
+      .populate('patient_id', 'name phone email age gender address');
 
     const formatted = requests.map((r) => ({
       _id: r._id,
+
+      // request details
       blood_type: r.blood_type,
       location: r.location,
-      patient_name: r.patient_id?.name || 'Unknown',
-      patient_phone: r.patient_id?.phone || 'N/A',
-      requested_at: r.requested_at
+      hospital: r.hospital,
+      units: r.units,
+      needed_by: r.needed_by,
+      note: r.note || '',
+
+      status: r.status,
+      requested_at: r.requested_at,
+      created_at: r.createdAt,
+
+      // best for donor UI: always present because required in your schema
+      patient_snapshot: r.patient_snapshot,
+
+      // fallbacks (in case you still use old fields in frontend)
+      patient_name: r.patient_snapshot?.name || r.patient_id?.name || 'Unknown',
+      patient_phone: r.patient_snapshot?.phone || r.patient_id?.phone || 'N/A',
+      patient_email: r.patient_snapshot?.email || r.patient_id?.email || '',
+      patient_age: r.patient_snapshot?.age ?? r.patient_id?.age ?? null,
+      patient_gender: r.patient_snapshot?.gender || r.patient_id?.gender || '',
+      patient_address: r.patient_snapshot?.address || r.patient_id?.address || '',
     }));
 
     res.status(200).json(formatted);
   } catch (error) {
-    console.error("❌ Error in getIncomingRequests:", error);
+    console.error('❌ Error in getIncomingRequests:', error);
     res.status(500).json({ message: 'Server error: ' + error.message });
   }
 };
+
 
 
 // ❗ New: Mark donation complete
